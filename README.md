@@ -7,7 +7,7 @@ An interactive dashboard for exploring congregational data from across the Episc
 The dashboard is published from `index.html`. If GitHub Pages is enabled for this repository (Settings → Pages → Deploy from branch → `main` / root), it will be available at:
 
 ```
-https://<your-username>.github.io/lobster-dashboard/
+https://perrymullins.github.io/lobster-dashboard/
 ```
 
 You can also open `index.html` directly in any modern browser — no server or build step required.

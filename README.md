@@ -16,7 +16,7 @@ You can also open `index.html` directly in any modern browser — no server or b
 
 **Main dashboard**
 
-- **Topline metrics** — Membership, ASA, pledge units, average pledge, operating revenue, expenses, and outreach, each shown against the trailing **3-year average**.
+- **Topline metrics** — Membership, ASA, pledge units, average pledge, operating revenue, expenses, outreach, and **market saturation** (ASA ÷ 10-mile population), each shown against the trailing **3-year average**.
 - **Trend over time** — Choose any metric (defaults to ASA), including **Market Saturation %** (ASA ÷ 10-mile population) to compare congregations' reach into their local areas. The chart automatically switches to a *by-church* view when any filter is active, and otherwise shows the diocesan aggregate. This selector also drives the convocation and region breakdown charts.
 - **Geographic distribution** — A county choropleth map zoomed to the diocesan footprint, shadable by church count, membership, ASA, operating revenue, outreach, or pledge units.
 - **Size tier mix** — Congregations grouped by the diocesan "One Size Does Not Fit All" ASA tiers (Family ≤75, Pastoral ≤150, Transitional ≤225, Program ≤450, Resource >450).

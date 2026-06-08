@@ -296,6 +296,7 @@ const M = {
   saturation:{label:'Market Saturation % (ASA ÷ 10-mi pop)',fmt:'pct3',agg:'sat'},
 };
 const KEY_METRICS = ['memYE','asa','pledgeUnits','avgPledge','opRev','exp','outreach'];
+const MAIN_KPIS = [...KEY_METRICS,'saturation'];
 const PALETTE = ['#1b2a4a','#c9a227','#9e1b32','#3f7cac','#5a8f69','#9b6fb0','#d98c3f','#4aa3a3','#8a99b5','#b8556a','#6d8b3a','#c77d9c'];
 const TIERS = ['Family','Pastoral','Transitional','Program','Resource'];
 const TIER_COLORS = {Family:'#5a8f69',Pastoral:'#3f7cac',Transitional:'#9b6fb0',Program:'#d98c3f',Resource:'#9e1b32','N/A':'#9aa3b5'};
@@ -565,7 +566,7 @@ function renderKPIs(){
   const set=activeChurches();
   const grid=document.getElementById('kpiGrid'); grid.innerHTML='';
   const priorYears=[state.year-1,state.year-2,state.year-3].filter(y=>YEARS.includes(y));
-  KEY_METRICS.forEach(k=>{
+  MAIN_KPIS.forEach(k=>{
     const cur=aggregate(set,k,state.year);
     // baseline = average of the metric over the trailing 3 reported years
     let prev=null;

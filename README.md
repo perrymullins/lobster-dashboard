@@ -7,7 +7,7 @@ An interactive dashboard for exploring congregational data from across the Episc
 The dashboard is published from `index.html`. If GitHub Pages is enabled for this repository (Settings → Pages → Deploy from branch → `main` / root), it will be available at:
 
 ```
-https://perrymullins.github.io/lobster-dashboard/
+https://<your-username>.github.io/lobster-dashboard/
 ```
 
 You can also open `index.html` directly in any modern browser — no server or build step required.
@@ -17,7 +17,7 @@ You can also open `index.html` directly in any modern browser — no server or b
 **Main dashboard**
 
 - **Topline metrics** — Membership, ASA, pledge units, average pledge, operating revenue, expenses, and outreach, each shown against the trailing **3-year average**.
-- **Trend over time** — Choose any metric (defaults to ASA). The chart automatically switches to a *by-church* view when any filter is active, and otherwise shows the diocesan aggregate. This selector also drives the convocation and region breakdown charts.
+- **Trend over time** — Choose any metric (defaults to ASA), including **Market Saturation %** (ASA ÷ 10-mile population) to compare congregations' reach into their local areas. The chart automatically switches to a *by-church* view when any filter is active, and otherwise shows the diocesan aggregate. This selector also drives the convocation and region breakdown charts.
 - **Geographic distribution** — A county choropleth map zoomed to the diocesan footprint, shadable by church count, membership, ASA, operating revenue, outreach, or pledge units.
 - **Size tier mix** — Congregations grouped by the diocesan "One Size Does Not Fit All" ASA tiers (Family ≤75, Pastoral ≤150, Transitional ≤225, Program ≤450, Resource >450).
 - **By convocation / by region** — Bar breakdowns of the selected trend metric.
@@ -38,6 +38,8 @@ You can also open `index.html` directly in any modern browser — no server or b
 
 - Header KPIs with year-over-year deltas.
 - Membership & attendance, attendance patterns (Sunday vs. Easter & Christmas), operating finances (revenue, expenses, plate & pledge, outreach), stewardship (pledge units & average pledge), outreach intensity, sacramental life, and an ASA size-tier journey chart.
+- **Stewardship** now overlays the **diocese-wide average pledge** (weighted, per year) for context against each church's own average pledge.
+- **Market Saturation** KPI (ASA ÷ population within 10 miles) plus a **Local market reach** chart comparing 10-mile population, ASA, and saturation over time.
 - Full annual data table with CSV export.
 
 ## Data
@@ -48,12 +50,15 @@ You can also open `index.html` directly in any modern browser — no server or b
 
 All data is embedded directly inside `index.html` as a JavaScript object, alongside Texas county boundary geometry for the map. There is no external database or API call — the page is fully portable.
 
+**Local population (10-mile radius).** Each church carries an estimated population within a 10-mile radius, used for the Market Saturation metric. It is computed **per year (2000–2025)**: 2020 U.S. Census tract counts (Census TIGERweb) are summed over all tract centroids within 10 miles of the church's ZIP-code centroid (covering Texas and the western Louisiana border), with each tract scaled to its county's population trajectory across the 2000, 2010 and 2020 decennial censuses and the 2020–2024 ACS 5-year estimates (linear interpolation between anchors; held flat after 2024). The 10-mile radius is always tract-level; counties only supply the year-over-year growth factor. Figures are estimates, not exact counts.
+
 ## Technical notes
 
 - **Single file:** Everything (HTML, CSS, JavaScript, data, and map geometry) lives in `index.html`.
 - **Charting:** [Chart.js 4.4.1](https://www.chartjs.org/) is loaded from a CDN, so an internet connection is required for charts to render. The page itself works offline; only the chart library is remote.
 - **No build step:** Plain HTML/CSS/JS — open it, host it, or commit it as-is.
 - **Browser support:** Any current version of Chrome, Edge, Safari, or Firefox.
+- **Mobile:** Both the main dashboard and individual church pages are responsive and optimized for phone-sized screens.
 
 ## Repository structure
 

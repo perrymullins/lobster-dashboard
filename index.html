@@ -158,7 +158,8 @@ tbody tr.clickable{cursor:pointer}
 .ch-meta .badge{background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-weight:600;color:#fff}
 .ch-meta a{color:var(--gold-soft)}
 .ch-tier{position:absolute;right:24px;top:22px;text-align:right;z-index:2}
-.ch-tier .print-btn{display:block;margin-left:auto;margin-top:12px}
+.ch-tier .ch-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:12px}
+.ch-tier .print-btn{display:inline-flex;white-space:nowrap}
 .ch-tier .lab{font-size:11px;color:#aeb9d4;text-transform:uppercase;letter-spacing:.05em}
 
 .empty{padding:40px;text-align:center;color:var(--muted);font-size:14px}
@@ -923,8 +924,10 @@ function renderChurch(c){
   <div class="ch-header">
     <div class="ch-tier"><div class="lab">Size Tier · ${ly}</div>
       <span class="tier-badge t-${tier==='N/A'?'NA':tier}" style="font-size:14px;padding:5px 14px;margin-top:5px">${tier}</span>
-      <button class="csv-btn print-btn" id="chCopyLink" title="Copy a shareable link to this church's page">🔗 Copy link</button>
-      <button class="csv-btn print-btn" id="chPrint" title="Download this church view as a PDF">⤓ Download PDF</button></div>
+      <div class="ch-actions">
+        <button class="csv-btn print-btn" id="chCopyLink" title="Copy a shareable link to this church's page">🔗 Copy link</button>
+        <button class="csv-btn print-btn" id="chPrint" title="Download this church view as a PDF">⤓ Download PDF</button>
+      </div></div>
     <h1>${c.name}</h1>
     <div class="ch-meta">
       <span class="badge">${c.type}</span>

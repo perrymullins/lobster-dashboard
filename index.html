@@ -322,6 +322,10 @@ DATA.churches.forEach(c=>{
   c.rows.forEach(r=>{ c._y[r[0]]=r; c._years.push(r[0]); });
 });
 const CH_BY_ID = {}; DATA.churches.forEach(c=>CH_BY_ID[c.id]=c);
+/* unique URL slug per church for shareable deep links (#church=<slug>) */
+function _slugify(s){ return String(s||'').toLowerCase().replace(/['’.]/g,'').replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+const CH_BY_SLUG = {};
+DATA.churches.forEach(c=>{ let base=_slugify(c.name)||('church-'+c.id), s=base, n=2; while(CH_BY_SLUG[s]){ s=base+'-'+(n++); } c.slug=s; CH_BY_SLUG[s]=c; });
 
 /* diocesan weighted-average pledge per year = sum(pledgeAmt)/sum(pledgeUnits) */
 const DIOCESE_AVG_PLEDGE = {};
@@ -872,8 +876,9 @@ function refreshAll(){
 }
 
 /* ============ CHURCH PAGE ============ */
-function openChurch(id){
-  const c=CH_BY_ID[id]; if(!c)return;
+/* ---- hash-based routing so every church has its own shareable URL (…#church=<slug>) ---- */
+function hashChurchKey(){ const m=/church=([^&]+)/.exec(location.hash||''); return m?decodeURIComponent(m[1]):null; }
+function showChurchView(c){
   window.scrollTo(0,0);
   document.getElementById('view-dashboard').classList.add('hidden');
   document.getElementById('view-church').classList.remove('hidden');
@@ -882,13 +887,30 @@ function openChurch(id){
   document.getElementById('crumb').innerHTML=`Dashboard <span>›</span> <b style="color:#fff">${c.name}</b>`;
   renderChurch(c);
 }
-function backToDash(){
+function showDashboardView(){
   document.getElementById('view-church').classList.add('hidden');
   document.getElementById('view-dashboard').classList.remove('hidden');
   document.getElementById('filterbar').classList.remove('hidden');
   document.getElementById('backBtn').classList.add('hidden');
   document.getElementById('crumb').innerHTML='';
   Object.keys(charts).forEach(k=>{ if(k.startsWith('ch_')&&charts[k]){charts[k].destroy();delete charts[k];} });
+}
+/* render whatever the current URL hash points to */
+function route(){
+  const key=hashChurchKey();
+  if(key){ const c=CH_BY_SLUG[key]||CH_BY_ID[+key]; if(c){ showChurchView(c); return; } }
+  showDashboardView();
+}
+/* called by clicks: just update the URL; the hashchange handler renders */
+function openChurch(id){
+  const c=CH_BY_ID[id]; if(!c)return;
+  const key=c.slug||String(c.id);
+  if(hashChurchKey()===key) showChurchView(c); // already at this URL: render directly
+  else location.hash='church='+key;
+}
+function backToDash(){
+  if(hashChurchKey()) location.hash=''; // triggers route() -> dashboard
+  else showDashboardView();
 }
 function lastYearWith(c,key){ for(let i=c._years.length-1;i>=0;i--){ const v=val(c,c._years[i],key); if(v!=null&&v!==0) return c._years[i]; } return c._years[c._years.length-1]; }
 
@@ -901,6 +923,7 @@ function renderChurch(c){
   <div class="ch-header">
     <div class="ch-tier"><div class="lab">Size Tier · ${ly}</div>
       <span class="tier-badge t-${tier==='N/A'?'NA':tier}" style="font-size:14px;padding:5px 14px;margin-top:5px">${tier}</span>
+      <button class="csv-btn print-btn" id="chCopyLink" title="Copy a shareable link to this church's page">🔗 Copy link</button>
       <button class="csv-btn print-btn" id="chPrint" title="Download this church view as a PDF">⤓ Download PDF</button></div>
     <h1>${c.name}</h1>
     <div class="ch-meta">
@@ -962,6 +985,13 @@ function renderChurch(c){
   document.getElementById('chCsv').addEventListener('click',()=>exportChurch(c));
   const pb=document.getElementById('chPrint');
   if(pb) pb.addEventListener('click',()=>downloadChurchPdf(c,pb));
+  const cl=document.getElementById('chCopyLink');
+  if(cl) cl.addEventListener('click',()=>{
+    const url=location.origin+location.pathname+location.search+'#church='+(c.slug||c.id);
+    const done=()=>{ const t=cl.textContent; cl.textContent='✓ Link copied'; setTimeout(()=>cl.textContent=t,1600); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done).catch(()=>{prompt('Copy this link:',url);}); }
+    else { prompt('Copy this link:',url); }
+  });
 }
 
 /* ---- Generate a paginated PDF of the church view (charts never split across pages) ---- */
@@ -1185,11 +1215,13 @@ function init(){
     Object.values(MS_REFS).forEach(r=>r.refresh()); refreshAll();
   });
   document.getElementById('backBtn').addEventListener('click',backToDash);
+  window.addEventListener('hashchange',route); // deep-link navigation (back/forward + shared URLs)
   // ensure Chart.js canvases re-layout to the print page width so they don't blank out
   window.addEventListener('beforeprint',()=>{ Object.values(charts).forEach(ch=>{ try{ch.resize();}catch(e){} }); });
   window.addEventListener('afterprint',()=>{ Object.values(charts).forEach(ch=>{ try{ch.resize();}catch(e){} }); });
   dashSkeleton();
   refreshAll();
+  route(); // honor an incoming deep link (…#church=<slug>) on first load
   document.getElementById('footer').innerHTML=
     `Episcopal Diocese of Texas · Congregational data ${YEARS[0]}–${YEARS[YEARS.length-1]} · ${DATA.churches.length} congregations. `+
     `Size tiers per diocesan "One Size Does Not Fit All" framework (ASA). 10-mile population is a per-year U.S. Census estimate: 2020 census tract counts summed within 10 miles of each church (ZIP centroid), scaled to each county's population trajectory across the 2000, 2010 and 2020 censuses and the 2020-2024 ACS 5-year estimates (interpolated between, held flat after). Charts require an internet connection (Chart.js CDN).`;

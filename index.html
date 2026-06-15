@@ -221,6 +221,18 @@ tbody tr.clickable{cursor:pointer}
   .section-title{flex-wrap:wrap;gap:4px}
 }
 
+@media print {
+  .topstack, .goldbar, .filterbar, #backBtn, .btn-back, .chjump, #crumb, .csv-btn, .print-btn { display:none !important; }
+  #view-dashboard { display:none !important; }
+  html, body { background:#fff !important; }
+  main { padding:0 !important; margin:0 !important; }
+  .ch-header { margin-top:0 !important; }
+  .card, .kpi, .grid { break-inside: avoid; page-break-inside: avoid; }
+  .card { box-shadow:none !important; border:1px solid #d7dce5 !important; }
+  .chart-wrap { page-break-inside: avoid; }
+  a[href]:after { content:""; }
+  @page { margin: 12mm; size: portrait; }
+}
 </style>
 </head>
 <body>
@@ -293,7 +305,7 @@ const M = {
   outreach:{label:'Outreach from Operating Revenue',fmt:'money',agg:'sum'},
   assess:{label:'Diocesan Assessment',fmt:'money',agg:'sum'},
   capital:{label:'Capital Funds',fmt:'money',agg:'sum'},
-  saturation:{label:'Market Saturation % (ASA ÷ 10-mi pop)',fmt:'pct3',agg:'sat'},
+  saturation:{label:'Market Saturation % (Membership ÷ 10-mi pop)',fmt:'pct3',agg:'sat'},
 };
 const KEY_METRICS = ['memYE','asa','pledgeUnits','avgPledge','opRev','exp','outreach'];
 const MAIN_KPIS = [...KEY_METRICS,'saturation'];
@@ -318,7 +330,7 @@ YEARS.forEach(y=>{
 });
 
 /* helpers */
-function val(c,year,key){ if(key==='saturation'){ const r=c._y[year]; const a=r?r[KI['asa']]:null; const p=popYear(c,year); return (a!=null&&p>0)? a/p*100 : null; } const r=c._y[year]; return r? r[KI[key]] : null; }
+function val(c,year,key){ if(key==='saturation'){ const r=c._y[year]; const a=r?r[KI['memYE']]:null; const p=popYear(c,year); return (a!=null&&p>0)? a/p*100 : null; } const r=c._y[year]; return r? r[KI[key]] : null; }
 function popYear(c,year){ if(c.pop10y){ const i=YEARS.indexOf(year); if(i>=0&&c.pop10y[i]!=null) return c.pop10y[i]; } return c.pop10||null; }
 function tierFromASA(a){ if(a==null) return 'N/A'; if(a<=0) return 'N/A'; if(a<=75)return'Family'; if(a<=150)return'Pastoral'; if(a<=225)return'Transitional'; if(a<=450)return'Program'; return 'Resource'; }
 function tierForChurch(c,year){
@@ -389,7 +401,7 @@ function activeChurches(){
 /* aggregate a metric over a set of churches for a given year */
 function aggregate(churches,key,year){
   const meta=M[key];
-  if(meta.agg==='sat'){ let a=0,p=0; churches.forEach(c=>{ const aa=val(c,year,'asa'),pp=popYear(c,year); if(aa!=null&&pp>0){a+=aa;p+=pp;} }); return p>0? a/p*100 : null; }
+  if(meta.agg==='sat'){ let a=0,p=0; churches.forEach(c=>{ const aa=val(c,year,'memYE'),pp=popYear(c,year); if(aa!=null&&pp>0){a+=aa;p+=pp;} }); return p>0? a/p*100 : null; }
   if(meta.agg==='wavg'){ // avg pledge = total pledged / total units
     let amt=0,units=0;
     churches.forEach(c=>{ const a=val(c,year,'pledgeAmt'),u=val(c,year,'pledgeUnits'); if(a)amt+=a; if(u)units+=u; });
@@ -628,10 +640,10 @@ function updateTrend(){
     document.getElementById('trendHint').textContent=hint;
   } else {
     const set=activeChurches();
-    datasets.push({label:meta.agg==='wavg'?'Weighted average':(meta.agg==='sat'?'Combined saturation (all filtered)':'Total (all filtered)'),
+    datasets.push({label:meta.agg==='wavg'?'Weighted average':(meta.agg==='sat'?'Combined saturation (all filtered)':'Total (all filtered)'),// sat = combined membership ÷ combined population
       data:YEARS.map(y=>aggregate(set,key,y)),
       borderColor:'#1b2a4a',backgroundColor:'rgba(27,42,74,.08)',fill:true,tension:.3,spanGaps:true,pointRadius:2,borderWidth:2.5});
-    document.getElementById('trendHint').textContent=`${set.length} churches · ${meta.agg==='wavg'?'weighted avg':(meta.agg==='sat'?'combined ASA ÷ combined population':'total')}`;
+    document.getElementById('trendHint').textContent=`${set.length} churches · ${meta.agg==='wavg'?'weighted avg':(meta.agg==='sat'?'combined membership ÷ combined population':'total')}`;
   }
   const cfg={type:'line',data:{labels:YEARS,datasets},options:{...chartBase(),
     scales:{y:{ticks:{callback:yFmtCallback(state.trendMetric)},grid:{color:'#eef0f5'}},x:{grid:{display:false}}},
@@ -897,6 +909,7 @@ function renderChurch(c){
       <span><b>Address:</b> ${c.addr||'—'}</span>
       <span><b>Website:</b> ${web}</span>
     </div>
+    <button class="csv-btn print-btn" id="chPrint" title="Print or save this church view as a PDF">⤓ Download / Print PDF</button>
   </div>
   <div class="kpi-grid" id="chKpis"></div>
 
@@ -922,7 +935,7 @@ function renderChurch(c){
   </div>
 
   <div class="card"><div class="chead"><h3>Local market reach</h3>
-      <span class="hint">10-mile population vs. ASA, with market saturation (ASA ÷ population)</span></div>
+      <span class="hint">10-mile population vs. membership, with market saturation (membership ÷ population)</span></div>
     <div class="chart-wrap h-mid"><canvas id="ch_popsat"></canvas></div></div>
 
   <div class="card"><div class="chead"><h3>Attendance &amp; size-tier journey</h3>
@@ -944,6 +957,8 @@ function renderChurch(c){
   chJourney(c);
   chTable(c);
   document.getElementById('chCsv').addEventListener('click',()=>exportChurch(c));
+  const pb=document.getElementById('chPrint');
+  if(pb) pb.addEventListener('click',()=>{ document.title=`EDOT — ${c.name}`; window.print(); });
 }
 function exportChurch(c){
   const cols=DATA.keys;
@@ -955,14 +970,19 @@ function exportChurch(c){
 
 function renderChurchKpis(c){
   const grid=document.getElementById('chKpis'); grid.innerHTML='';
+  // baseline = average of the metric over the 3 reported years prior to the latest year (matches main dashboard)
+  function avg3(key,ly){
+    const vals=[ly-1,ly-2,ly-3].map(y=>val(c,y,key)).filter(v=>v!=null);
+    return vals.length? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+  }
   KEY_METRICS.forEach(k=>{
     const ly=lastYearWith(c,k); const cur=val(c,ly,k);
-    const prev=val(c,ly-1,k);
+    const prev=avg3(k,ly);
     let deltaHtml='<div class="delta flat">—</div>';
     if(cur!=null&&prev!=null&&prev!==0){
       const d=(cur-prev)/Math.abs(prev)*100; const cls=d>0.05?'up':(d<-0.05?'down':'flat');
       const arr=d>0.05?'▲':(d<-0.05?'▼':'■');
-      deltaHtml=`<div class="delta ${cls}">${arr} ${Math.abs(d).toFixed(1)}% vs ${ly-1}</div>`;
+      deltaHtml=`<div class="delta ${cls}">${arr} ${Math.abs(d).toFixed(1)}% vs 3-yr avg</div>`;
     }
     const div=document.createElement('div'); div.className='kpi';
     div.innerHTML=`<div class="label">${M[k].label}</div><div class="val">${fmt(cur,M[k].fmt)}</div>${deltaHtml}
@@ -970,18 +990,20 @@ function renderChurchKpis(c){
     grid.appendChild(div);
   });
   if(c.pop10){
-    const ly=lastYearWith(c,'asa'); const asa=val(c,ly,'asa'); const popLy=popYear(c,ly);
-    const sat=(asa!=null&&popLy>0)?asa/popLy*100:null;
-    const prevAsa=val(c,ly-1,'asa'); const popPrev=popYear(c,ly-1);
+    const ly=lastYearWith(c,'memYE'); const mem=val(c,ly,'memYE'); const popLy=popYear(c,ly);
+    const sat=(mem!=null&&popLy>0)?mem/popLy*100:null;
+    // 3-yr avg baseline for saturation
+    const satVals=[ly-1,ly-2,ly-3].map(y=>{const m=val(c,y,'memYE');const p=popYear(c,y);return (m!=null&&p>0)?m/p*100:null;}).filter(v=>v!=null);
+    const prevSat=satVals.length? satVals.reduce((a,b)=>a+b,0)/satVals.length : null;
     let dh='<div class="delta flat">—</div>';
-    if(sat!=null&&prevAsa!=null&&prevAsa>0&&popPrev>0){
-      const prevSat=prevAsa/popPrev*100; const d=(sat-prevSat)/prevSat*100;
+    if(sat!=null&&prevSat!=null&&prevSat!==0){
+      const d=(sat-prevSat)/prevSat*100;
       const cls=d>0.05?'up':(d<-0.05?'down':'flat'); const arr=d>0.05?'▲':(d<-0.05?'▼':'■');
-      dh=`<div class="delta ${cls}">${arr} ${Math.abs(d).toFixed(1)}% vs ${ly-1}</div>`;
+      dh=`<div class="delta ${cls}">${arr} ${Math.abs(d).toFixed(1)}% vs 3-yr avg</div>`;
     }
     const div=document.createElement('div'); div.className='kpi';
     div.innerHTML=`<div class="label">Market Saturation</div><div class="val">${sat!=null?sat.toFixed(3)+'%':'—'}</div>${dh}
-      <div style="font-size:10.5px;color:#9aa3b5;margin-top:2px">ASA ÷ ${fmt(popLy,'int')} within 10 mi (${ly})</div>`;
+      <div style="font-size:10.5px;color:#9aa3b5;margin-top:2px">Membership ÷ ${fmt(popLy,'int')} within 10 mi (${ly})</div>`;
     grid.appendChild(div);
   }
 }
@@ -1009,12 +1031,12 @@ function chPledge(c){
 }
 function chPopSat(c){
   const ctx=document.getElementById('ch_popsat'); if(!ctx||!c.pop10)return;
-  const asa=YEARS.map(y=>val(c,y,'asa'));
-  const sat=YEARS.map(y=>{const a=val(c,y,'asa');const pop=popYear(c,y);return (a!=null&&pop>0)?a/pop*100:null;});
+  const mem=YEARS.map(y=>val(c,y,'memYE'));
+  const sat=YEARS.map(y=>{const a=val(c,y,'memYE');const pop=popYear(c,y);return (a!=null&&pop>0)?a/pop*100:null;});
   const popLine=YEARS.map(y=>popYear(c,y));
   charts.ch_popsat=new Chart(ctx,{data:{labels:YEARS,datasets:[
     {type:'line',label:'10-mi Population (est.)',data:popLine,borderColor:'#9aa3b5',backgroundColor:'#9aa3b5',borderDash:[6,4],pointRadius:0,borderWidth:2,yAxisID:'y',order:3},
-    {type:'line',label:'ASA',data:asa,borderColor:'#1b2a4a',backgroundColor:'#1b2a4a',tension:.3,spanGaps:true,pointRadius:2,borderWidth:2.5,yAxisID:'y',order:2},
+    {type:'line',label:'Membership',data:mem,borderColor:'#1b2a4a',backgroundColor:'#1b2a4a',tension:.3,spanGaps:true,pointRadius:2,borderWidth:2.5,yAxisID:'y',order:2},
     {type:'line',label:'Market Saturation %',data:sat,borderColor:'#c9a227',backgroundColor:'#c9a227',tension:.3,spanGaps:true,pointRadius:2,borderWidth:2.5,yAxisID:'y1',order:1}]},
     options:{...chartBase(),plugins:{...chartBase().plugins,legend:{position:'bottom',labels:{boxWidth:12,font:{size:11},usePointStyle:true}},
       tooltip:{callbacks:{label:x=>x.dataset.label==='Market Saturation %'?`Market Saturation: ${x.parsed.y!=null?x.parsed.y.toFixed(3)+'%':'—'}`:`${x.dataset.label}: ${fmt(x.parsed.y,'int')}`}}},
@@ -1114,6 +1136,9 @@ function init(){
     Object.values(MS_REFS).forEach(r=>r.refresh()); refreshAll();
   });
   document.getElementById('backBtn').addEventListener('click',backToDash);
+  // ensure Chart.js canvases re-layout to the print page width so they don't blank out
+  window.addEventListener('beforeprint',()=>{ Object.values(charts).forEach(ch=>{ try{ch.resize();}catch(e){} }); });
+  window.addEventListener('afterprint',()=>{ Object.values(charts).forEach(ch=>{ try{ch.resize();}catch(e){} }); });
   dashSkeleton();
   refreshAll();
   document.getElementById('footer').innerHTML=

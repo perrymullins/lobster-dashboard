@@ -969,8 +969,10 @@ async function downloadChurchPdf(c,btn){
   const view=document.getElementById('view-church');
   const origLabel=btn?btn.textContent:'';
   if(btn){ btn.disabled=true; btn.textContent='Generating PDF…'; }
-  // hide controls that shouldn't appear in the PDF
+  // hide controls + the full data table (excluded from the PDF)
   const hide=[...view.querySelectorAll('.csv-btn,.print-btn')];
+  const tableCard=(document.getElementById('ch_table')||{}).closest? document.getElementById('ch_table').closest('.card'):null;
+  if(tableCard) hide.push(tableCard);
   const prevDisp=hide.map(el=>el.style.display); hide.forEach(el=>el.style.display='none');
   try{
     const scale=2;
@@ -983,9 +985,10 @@ async function downloadChurchPdf(c,btn){
     const imgWmm=pageW-2*margin;
     const pxPerMm=cw/imgWmm;
     const contentHpx=(pageH-2*margin-footer)*pxPerMm;
-    // candidate cut points (canvas px) = top of each top-level block, so a chart card is never split
+    // candidate cut points (canvas px) = true top of each visible block, measured relative to the captured view
+    const vTop=view.getBoundingClientRect().top;
     const cuts=new Set([0,ch]);
-    [...view.children].forEach(el=>{ if(el.offsetParent!==null){ cuts.add(Math.round(el.offsetTop*scale)); } });
+    [...view.children].forEach(el=>{ if(el.offsetParent!==null){ const top=(el.getBoundingClientRect().top-vTop); cuts.add(Math.round(top*scale)); } });
     const cutArr=[...cuts].sort((a,b)=>a-b);
     const dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
     let startPx=0, pageNo=0;

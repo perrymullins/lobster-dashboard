@@ -16,8 +16,8 @@ You can also open `index.html` directly in any modern browser — no server or b
 
 **Main dashboard**
 
-- **Topline metrics** — Membership, ASA, pledge units, average pledge, operating revenue, expenses, outreach, and **market saturation** (ASA ÷ 10-mile population), each shown against the trailing **3-year average**.
-- **Trend over time** — Choose any metric (defaults to ASA), including **Market Saturation %** (ASA ÷ 10-mile population) to compare congregations' reach into their local areas. The chart automatically switches to a *by-church* view when any filter is active, and otherwise shows the diocesan aggregate. This selector also drives the convocation and region breakdown charts.
+- **Topline metrics** — Membership, ASA, pledge units, average pledge, operating revenue, expenses, outreach, and **mission field reach** (membership ÷ population), each shown against the trailing **3-year average**.
+- **Trend over time** — Choose any metric (defaults to ASA), including **Mission Field Reach %** (membership ÷ population) to compare how far congregations reach into their local mission fields. The chart automatically switches to a *by-church* view when any filter is active, and otherwise shows the diocesan aggregate. This selector also drives the convocation and region breakdown charts.
 - **Geographic distribution** — A county choropleth map zoomed to the diocesan footprint, shadable by church count, membership, ASA, operating revenue, outreach, or pledge units.
 - **Size tier mix** — Congregations grouped by the diocesan "One Size Does Not Fit All" ASA tiers (Family ≤75, Pastoral ≤150, Transitional ≤225, Program ≤450, Resource >450).
 - **By convocation / by region** — Bar breakdowns of the selected trend metric.
@@ -39,7 +39,7 @@ You can also open `index.html` directly in any modern browser — no server or b
 - Header KPIs with year-over-year deltas.
 - Membership & attendance, attendance patterns (Sunday vs. Easter & Christmas), operating finances (revenue, expenses, plate & pledge, outreach), stewardship (pledge units & average pledge), outreach intensity, sacramental life, and an ASA size-tier journey chart.
 - **Stewardship** now overlays the **diocese-wide average pledge** (weighted, per year) for context against each church's own average pledge.
-- **Market Saturation** KPI (ASA ÷ population within 10 miles) plus a **Local market reach** chart comparing 10-mile population, ASA, and saturation over time.
+- **Mission field reach.** A radius dropdown (1, 2.5, 5, 10 or 20 miles; default 5) drives a Mission Field Reach KPI (membership ÷ population within the radius), a chart of population, membership and reach over time, and a list of the other Episcopal churches within the same radius, nearest first, each linking to its own page.
 - Full annual data table with CSV export.
 
 ## Data
@@ -50,7 +50,11 @@ You can also open `index.html` directly in any modern browser — no server or b
 
 All data is embedded directly inside `index.html` as a JavaScript object, alongside Texas county boundary geometry for the map. There is no external database or API call — the page is fully portable.
 
-**Local population (10-mile radius).** Each church carries an estimated population within a 10-mile radius, used for the Market Saturation metric. It is computed **per year (2000–2025)**: 2020 U.S. Census tract counts (Census TIGERweb) are summed over all tract centroids within 10 miles of the church's ZIP-code centroid (covering Texas and the western Louisiana border), with each tract scaled to its county's population trajectory across the 2000, 2010 and 2020 decennial censuses and the 2020–2024 ACS 5-year estimates (linear interpolation between anchors; held flat after 2024). The 10-mile radius is always tract-level; counties only supply the year-over-year growth factor. Figures are estimates, not exact counts.
+**Mission field population.** Each church carries an estimated population within 1, 2.5, 5, 10 and 20 miles of its street address, **per year (2000–2025)**. Every populated 2020 U.S. Census block in Texas (2020 Redistricting Data, PL 94-171) counts if its center point falls within the radius. Each block is scaled to each year by its own county's growth, using Census Bureau annual county population estimates (intercensal 2000–2009, Vintage 2020 for 2010–2019, Vintage 2025 for 2020–2025). Only Texas population is counted. Figures are estimates, not exact counts.
+
+**Diocese-wide reach.** The main page's Mission Field Reach % is total membership ÷ the population of the diocese, so each person is counted once. From 2022, when the North Region (formerly the Episcopal Diocese of Fort Worth) joined, that is 81 counties: the 57 historic Diocese of Texas counties, 23 whole North Region counties, and the part of Grand Prairie that lies in Dallas County. For 2000–2021 it is the 57 historic counties, since the source data has no North Region churches before 2022. The drop between 2021 and 2022 reflects that boundary change. Populations are Census Bureau annual county estimates, plus the Census estimate for Grand Prairie's Dallas County part. When filters are applied, the number is the filtered churches' members ÷ the same diocesan population.
+
+**Church locations.** Each church is placed at its physical street address (latitude and longitude stored with the church). About 30% of addresses in the source data are mailing P.O. boxes, so physical addresses were confirmed from each church's website and the diocesan directory, and a few were pinned by hand. The nearby church list is calculated in the page from these locations.
 
 ## Technical notes
 
